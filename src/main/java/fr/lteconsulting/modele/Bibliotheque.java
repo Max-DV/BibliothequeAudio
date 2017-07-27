@@ -1,7 +1,9 @@
 package fr.lteconsulting.modele;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import fr.lteconsulting.dao.DisqueDAO;
 
@@ -31,42 +33,20 @@ public class Bibliotheque
 
 	public List<Disque> rechercherDisqueParNom( String recherche )
 	{
-		recherche = recherche.toLowerCase();
-
-		List<Disque> resultat = new ArrayList<>();
-
-		// TODO pour optimiser la recherche, nous devrions la faire faire à MySQL (ajouter une méthode au DAO)
-		for( Disque disque : disqueDao.findAll() )
-		{
-			if( disque.getNom().toLowerCase().contains( recherche ) )
-				resultat.add( disque );
-		}
-
-		return resultat;
+		return disqueDao.findByName( recherche );
 	}
 
 	public List<Disque> rechercherDisqueParNom( List<String> termes )
 	{
-		List<Disque> resultat = new ArrayList<>();
+		Map<String, Disque> validDisques = new HashMap<>();
 
-		// TODO pour optimiser la recherche, nous devrions la faire faire à MySQL (ajouter une méthode au DAO)
-		for( Disque disque : disqueDao.findAll() )
+		for( String terme : termes )
 		{
-			boolean estValide = true;
-			for( String terme : termes )
-			{
-				if( !disque.getNom().toLowerCase().contains( terme.toLowerCase() ) )
-				{
-					estValide = false;
-					break;
-				}
-			}
-
-			if( estValide )
-				resultat.add( disque );
+			for( Disque disque : disqueDao.findByName( terme ) )
+				validDisques.put( disque.getCodeBarre(), disque );
 		}
 
-		return resultat;
+		return new ArrayList<>( validDisques.values() );
 	}
 
 	public void afficher()

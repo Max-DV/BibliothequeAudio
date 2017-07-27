@@ -64,6 +64,32 @@ public class DisqueDAO
 		}
 	}
 
+	public List<Disque> findByName( String search )
+	{
+		search = search.toLowerCase();
+
+		try
+		{
+			List<Disque> disques = new ArrayList<>();
+
+			String sql = "SELECT * FROM `disques` WHERE LOWER(`nom`) LIKE ?";
+			PreparedStatement statement = connection.prepareStatement( sql );
+			statement.setString( 1, "%" + search + "%" );
+			ResultSet resultSet = statement.executeQuery();
+			while( resultSet.next() )
+			{
+				Disque disque = createDisqueFromResultSet( resultSet );
+				disques.add( disque );
+			}
+
+			return disques;
+		}
+		catch( SQLException e )
+		{
+			throw new RuntimeException( "Impossible de réaliser l(es) opération(s)", e );
+		}
+	}
+
 	public Disque add( Disque disque )
 	{
 		try
