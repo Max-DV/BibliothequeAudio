@@ -13,71 +13,71 @@ import fr.lteconsulting.modele.Chanson;
 
 public class ChansonDAO
 {
-	private Connection connection;
+	private MySQLDatabaseConnection connection;
 
 	public ChansonDAO( MySQLDatabaseConnection connection )
 	{
-		this.connection = connection.getConnection();
+		this.connection = connection;
 	}
 
 	public Chanson findById( String id )
 	{
-		try
+		return connection.runInTransaction( new InTransactionExecution<Chanson>()
 		{
-			String sql = "SELECT * FROM `chansons` WHERE id = ?";
-			PreparedStatement statement = connection.prepareStatement( sql );
-			statement.setString( 1, id );
-			ResultSet resultSet = statement.executeQuery();
-			if( resultSet.next() )
-				return createChansonFromResultSet( resultSet );
-			else
-				return null;
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de réaliser l(es) opération(s)", e );
-		}
+			@Override
+			public Chanson execute( Connection connection ) throws Exception
+			{
+				String sql = "SELECT * FROM `chansons` WHERE id = ?";
+				PreparedStatement statement = connection.prepareStatement( sql );
+				statement.setString( 1, id );
+				ResultSet resultSet = statement.executeQuery();
+				if( resultSet.next() )
+					return createChansonFromResultSet( resultSet );
+				else
+					return null;
+			}
+		} );
 	}
 
 	public List<Chanson> findAll()
 	{
-		try
+		return connection.runInTransaction( new InTransactionExecution<List<Chanson>>()
 		{
-			List<Chanson> chansons = new ArrayList<>();
+			@Override
+			public List<Chanson> execute( Connection connection ) throws Exception
+			{
+				List<Chanson> chansons = new ArrayList<>();
 
-			String sql = "SELECT * FROM `chansons`";
-			PreparedStatement statement = connection.prepareStatement( sql );
-			ResultSet resultSet = statement.executeQuery();
-			while( resultSet.next() )
-				chansons.add( createChansonFromResultSet( resultSet ) );
+				String sql = "SELECT * FROM `chansons`";
+				PreparedStatement statement = connection.prepareStatement( sql );
+				ResultSet resultSet = statement.executeQuery();
+				while( resultSet.next() )
+					chansons.add( createChansonFromResultSet( resultSet ) );
 
-			return chansons;
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de réaliser l(es) opération(s)", e );
-		}
+				return chansons;
+			}
+		} );
 	}
 
 	public List<Chanson> findByDisqueId( String disqueId )
 	{
-		try
+		return connection.runInTransaction( new InTransactionExecution<List<Chanson>>()
 		{
-			List<Chanson> chansons = new ArrayList<>();
+			@Override
+			public List<Chanson> execute( Connection connection ) throws Exception
+			{
+				List<Chanson> chansons = new ArrayList<>();
 
-			String sql = "SELECT * FROM `chansons` WHERE `disque_id` = ?";
-			PreparedStatement statement = connection.prepareStatement( sql );
-			statement.setString( 1, disqueId );
-			ResultSet resultSet = statement.executeQuery();
-			while( resultSet.next() )
-				chansons.add( createChansonFromResultSet( resultSet ) );
+				String sql = "SELECT * FROM `chansons` WHERE `disque_id` = ?";
+				PreparedStatement statement = connection.prepareStatement( sql );
+				statement.setString( 1, disqueId );
+				ResultSet resultSet = statement.executeQuery();
+				while( resultSet.next() )
+					chansons.add( createChansonFromResultSet( resultSet ) );
 
-			return chansons;
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de réaliser l(es) opération(s)", e );
-		}
+				return chansons;
+			}
+		} );
 	}
 
 	public Chanson add( Chanson chanson )
@@ -85,32 +85,33 @@ public class ChansonDAO
 		if( chanson.getDisqueId() == null )
 			throw new RuntimeException( "Impossible d'ajouter une chanson sans connaître son disque !" );
 
-		try
+		return connection.runInTransaction( new InTransactionExecution<Chanson>()
 		{
-			String sqlQuery = "INSERT INTO chansons (`disque_id`, `nom`, `duree`) VALUES (?, ?, ?)";
 
-			PreparedStatement statement = connection.prepareStatement( sqlQuery, Statement.RETURN_GENERATED_KEYS );
-			statement.setString( 1, chanson.getDisqueId() );
-			statement.setString( 2, chanson.getNom() );
-			statement.setInt( 3, chanson.getDureeEnSecondes() );
-
-			int nbEnregistrementInseres = statement.executeUpdate();
-			if( nbEnregistrementInseres == 0 )
-				throw new RuntimeException( "Aucune chanson insérée" );
-
-			ResultSet createdIds = statement.getGeneratedKeys();
-			if( createdIds.next() )
+			@Override
+			public Chanson execute( Connection connection ) throws Exception
 			{
-				chanson.setId( createdIds.getInt( 1 ) );
-				return chanson;
-			}
+				String sqlQuery = "INSERT INTO chansons (`disque_id`, `nom`, `duree`) VALUES (?, ?, ?)";
 
-			throw new RuntimeException( "Aucun chanson ajoutée" );
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible d'ajouter la chanson", e );
-		}
+				PreparedStatement statement = connection.prepareStatement( sqlQuery, Statement.RETURN_GENERATED_KEYS );
+				statement.setString( 1, chanson.getDisqueId() );
+				statement.setString( 2, chanson.getNom() );
+				statement.setInt( 3, chanson.getDureeEnSecondes() );
+
+				int nbEnregistrementInseres = statement.executeUpdate();
+				if( nbEnregistrementInseres == 0 )
+					throw new RuntimeException( "Aucune chanson insérée" );
+
+				ResultSet createdIds = statement.getGeneratedKeys();
+				if( createdIds.next() )
+				{
+					chanson.setId( createdIds.getInt( 1 ) );
+					return chanson;
+				}
+
+				throw new RuntimeException( "Aucun chanson ajoutée" );
+			}
+		} );
 	}
 
 	public void update( Chanson chanson )
@@ -118,56 +119,62 @@ public class ChansonDAO
 		if( chanson.getDisqueId() == null )
 			throw new RuntimeException( "Impossible de modifier une chanson sans connaître son disque !" );
 
-		try
+		connection.runInTransaction( new InTransactionExecution<Void>()
 		{
-			String sqlQuery = "UPDATE chansons SET `disque_id` = ?, `nom` = ?, `duree` = ? WHERE id = ?";
+			@Override
+			public Void execute( Connection connection ) throws Exception
+			{
+				String sqlQuery = "UPDATE chansons SET `disque_id` = ?, `nom` = ?, `duree` = ? WHERE id = ?";
 
-			PreparedStatement statement = connection.prepareStatement( sqlQuery );
-			statement.setString( 1, chanson.getDisqueId() );
-			statement.setString( 2, chanson.getNom() );
-			statement.setInt( 3, chanson.getDureeEnSecondes() );
-			statement.setInt( 4, chanson.getId() );
+				PreparedStatement statement = connection.prepareStatement( sqlQuery );
+				statement.setString( 1, chanson.getDisqueId() );
+				statement.setString( 2, chanson.getNom() );
+				statement.setInt( 3, chanson.getDureeEnSecondes() );
+				statement.setInt( 4, chanson.getId() );
 
-			statement.executeUpdate();
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de mettre à jour la chanson", e );
-		}
+				statement.executeUpdate();
+
+				return null;
+			}
+		} );
 	}
 
 	public void delete( int id )
 	{
-		try
+		connection.runInTransaction( new InTransactionExecution<Void>()
 		{
-			String sqlQuery = "DELETE FROM chansons WHERE id = ?";
+			@Override
+			public Void execute( Connection connection ) throws Exception
+			{
+				String sqlQuery = "DELETE FROM chansons WHERE id = ?";
 
-			PreparedStatement statement = connection.prepareStatement( sqlQuery );
-			statement.setInt( 1, id );
+				PreparedStatement statement = connection.prepareStatement( sqlQuery );
+				statement.setInt( 1, id );
 
-			statement.executeUpdate();
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de retirer la chanson", e );
-		}
+				statement.executeUpdate();
+
+				return null;
+			}
+		} );
 	}
 
 	public void deleteByDisqueId( String disqueId )
 	{
-		try
+		connection.runInTransaction( new InTransactionExecution<Void>()
 		{
-			String sqlQuery = "DELETE FROM chansons WHERE disque_id = ?";
+			@Override
+			public Void execute( Connection connection ) throws Exception
+			{
+				String sqlQuery = "DELETE FROM chansons WHERE disque_id = ?";
 
-			PreparedStatement statement = connection.prepareStatement( sqlQuery );
-			statement.setString( 1, disqueId );
+				PreparedStatement statement = connection.prepareStatement( sqlQuery );
+				statement.setString( 1, disqueId );
 
-			statement.executeUpdate();
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de retirer la chanson", e );
-		}
+				statement.executeUpdate();
+
+				return null;
+			}
+		} );
 	}
 
 	private Chanson createChansonFromResultSet( ResultSet resultSet ) throws SQLException

@@ -13,119 +13,117 @@ import fr.lteconsulting.modele.Disque;
 
 public class DisqueDAO
 {
-	private Connection connection;
+	private MySQLDatabaseConnection connection;
 	private ChansonDAO chansonDAO;
 
 	public DisqueDAO( MySQLDatabaseConnection connection, ChansonDAO chansonDAO )
 	{
-		this.connection = connection.getConnection();
+		this.connection = connection;
 		this.chansonDAO = chansonDAO;
 	}
 
 	public Disque findById( String id )
 	{
-		try
+		return connection.runInTransaction( new InTransactionExecution<Disque>()
 		{
-			String sql = "SELECT * FROM `disques` WHERE id = ?";
-			PreparedStatement statement = connection.prepareStatement( sql );
-			statement.setString( 1, id );
-			ResultSet resultSet = statement.executeQuery();
-			if( resultSet.next() )
-				return createDisqueFromResultSet( resultSet );
-			else
-				return null;
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de réaliser l(es) opération(s)", e );
-		}
+			@Override
+			public Disque execute( Connection connection ) throws Exception
+			{
+				String sql = "SELECT * FROM `disques` WHERE id = ?";
+				PreparedStatement statement = connection.prepareStatement( sql );
+				statement.setString( 1, id );
+				ResultSet resultSet = statement.executeQuery();
+				if( resultSet.next() )
+					return createDisqueFromResultSet( resultSet );
+				else
+					return null;
+			}
+		} );
 	}
 
 	public List<Disque> findAll()
 	{
-		try
+		return connection.runInTransaction( new InTransactionExecution<List<Disque>>()
 		{
-			List<Disque> disques = new ArrayList<>();
-
-			String sql = "SELECT * FROM `disques`";
-			PreparedStatement statement = connection.prepareStatement( sql );
-			ResultSet resultSet = statement.executeQuery();
-			while( resultSet.next() )
+			@Override
+			public List<Disque> execute( Connection connection ) throws Exception
 			{
-				Disque disque = createDisqueFromResultSet( resultSet );
-				disques.add( disque );
-			}
+				List<Disque> disques = new ArrayList<>();
 
-			return disques;
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de réaliser l(es) opération(s)", e );
-		}
+				String sql = "SELECT * FROM `disques`";
+				PreparedStatement statement = connection.prepareStatement( sql );
+				ResultSet resultSet = statement.executeQuery();
+				while( resultSet.next() )
+				{
+					Disque disque = createDisqueFromResultSet( resultSet );
+					disques.add( disque );
+				}
+
+				return disques;
+			}
+		} );
 	}
 
 	public List<Disque> findByName( String search )
 	{
-		search = search.toLowerCase();
-
-		try
+		return connection.runInTransaction( new InTransactionExecution<List<Disque>>()
 		{
-			List<Disque> disques = new ArrayList<>();
-
-			String sql = "SELECT * FROM `disques` WHERE LOWER(`nom`) LIKE ?";
-			PreparedStatement statement = connection.prepareStatement( sql );
-			statement.setString( 1, "%" + search + "%" );
-			ResultSet resultSet = statement.executeQuery();
-			while( resultSet.next() )
+			@Override
+			public List<Disque> execute( Connection connection ) throws Exception
 			{
-				Disque disque = createDisqueFromResultSet( resultSet );
-				disques.add( disque );
-			}
+				List<Disque> disques = new ArrayList<>();
 
-			return disques;
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de réaliser l(es) opération(s)", e );
-		}
+				String sql = "SELECT * FROM `disques` WHERE LOWER(`nom`) LIKE ?";
+				PreparedStatement statement = connection.prepareStatement( sql );
+				statement.setString( 1, "%" + search.toLowerCase() + "%" );
+				ResultSet resultSet = statement.executeQuery();
+				while( resultSet.next() )
+				{
+					Disque disque = createDisqueFromResultSet( resultSet );
+					disques.add( disque );
+				}
+
+				return disques;
+			}
+		} );
 	}
 
 	public Disque add( Disque disque )
 	{
-		try
+		return connection.runInTransaction( new InTransactionExecution<Disque>()
 		{
-			// génération d'un identifiant si nécessaire
-			String id = disque.getCodeBarre();
-			if( id == null )
-				id = UUID.randomUUID().toString();
-
-			String sqlQuery = "INSERT INTO disques (`id`, `nom`) VALUES (?, ?)";
-
-			PreparedStatement statement = connection.prepareStatement( sqlQuery );
-			statement.setString( 1, id );
-			statement.setString( 2, disque.getNom() );
-
-			int nbEnregistrementInseres = statement.executeUpdate();
-			if( nbEnregistrementInseres == 0 )
-				throw new RuntimeException( "Aucun disque inséré" );
-
-			// met à jour l'objet disque avec l'id généré
-			// pour mettre l'appelant au courant de l'id généré
-			disque.setCodeBarre( id );
-
-			// insértion en base des chansons du disque
-			for( Chanson chanson : disque.getChansons() )
+			@Override
+			public Disque execute( Connection connection ) throws Exception
 			{
-				chanson.setDisqueId( id );
-				chansonDAO.add( chanson );
-			}
+				// génération d'un identifiant si nécessaire
+				String id = disque.getCodeBarre();
+				if( id == null )
+					id = UUID.randomUUID().toString();
 
-			return disque;
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible d'ajouter le disque", e );
-		}
+				String sqlQuery = "INSERT INTO disques (`id`, `nom`) VALUES (?, ?)";
+
+				PreparedStatement statement = connection.prepareStatement( sqlQuery );
+				statement.setString( 1, id );
+				statement.setString( 2, disque.getNom() );
+
+				int nbEnregistrementInseres = statement.executeUpdate();
+				if( nbEnregistrementInseres == 0 )
+					throw new RuntimeException( "Aucun disque inséré" );
+
+				// met à jour l'objet disque avec l'id généré
+				// pour mettre l'appelant au courant de l'id généré
+				disque.setCodeBarre( id );
+
+				// insértion en base des chansons du disque
+				for( Chanson chanson : disque.getChansons() )
+				{
+					chanson.setDisqueId( id );
+					chansonDAO.add( chanson );
+				}
+
+				return disque;
+			}
+		} );
 	}
 
 	public void update( Disque disque )
@@ -137,71 +135,64 @@ public class DisqueDAO
 			return;
 		}
 
-		try
+		connection.runInTransaction( new InTransactionExecution<Void>()
 		{
-			String sqlQuery = "UPDATE disques SET `nom` = ? WHERE id = ?";
-
-			PreparedStatement statement = connection.prepareStatement( sqlQuery );
-			statement.setString( 1, disque.getNom() );
-			statement.setString( 2, disque.getCodeBarre() );
-
-			statement.executeUpdate();
-
-			// Mise à jour des chansons du disque : ceci se passe en deux étapes
-			// c'est une version pas du tout optimisée, mais facile à comprendre !
-
-			// ajouter en base les chansons qui n'ont pas d'id (c'est-à-dire quelles sont nouvelles)
-			// mettre à jour les chansons qui ont un id
-			for( Chanson chanson : disque.getChansons() )
+			@Override
+			public Void execute( Connection connection ) throws Exception
 			{
-				if( chanson.getId() <= 0 )
-					chansonDAO.add( chanson );
-				else
-					chansonDAO.update( chanson );
+				String sqlQuery = "UPDATE disques SET `nom` = ? WHERE id = ?";
+
+				PreparedStatement statement = connection.prepareStatement( sqlQuery );
+				statement.setString( 1, disque.getNom() );
+				statement.setString( 2, disque.getCodeBarre() );
+
+				statement.executeUpdate();
+
+				// Mise à jour des chansons du disque : ceci se passe en deux étapes
+				// c'est une version pas du tout optimisée, mais facile à comprendre !
+
+				// ajouter en base les chansons qui n'ont pas d'id (c'est-à-dire quelles sont nouvelles)
+				// mettre à jour les chansons qui ont un id
+				for( Chanson chanson : disque.getChansons() )
+				{
+					if( chanson.getId() <= 0 )
+						chansonDAO.add( chanson );
+					else
+						chansonDAO.update( chanson );
+				}
+
+				// supprimer les chansons qui sont dans la base pour ce disque mais qui ne sont pas dans l'objet disque
+				for( Chanson chanson : chansonDAO.findByDisqueId( disque.getCodeBarre() ) )
+				{
+					if( !doesDisqueHasChanson( disque, chanson.getId() ) )
+						chansonDAO.delete( chanson.getId() );
+				}
+
+				return null;
 			}
-
-			// supprimer les chansons qui sont dans la base pour ce disque mais qui ne sont pas dans l'objet disque
-			for( Chanson chanson : chansonDAO.findByDisqueId( disque.getCodeBarre() ) )
-			{
-				if( !doesDisqueHasChanson( disque, chanson.getId() ) )
-					chansonDAO.delete( chanson.getId() );
-			}
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de mettre à jour le disque", e );
-		}
-	}
-
-	private boolean doesDisqueHasChanson( Disque disque, int chansonId )
-	{
-		for( Chanson chanson : disque.getChansons() )
-		{
-			if( chanson.getId() == chansonId )
-				return true;
-		}
-
-		return false;
+		} );
 	}
 
 	public void delete( String id )
 	{
-		try
+		connection.runInTransaction( new InTransactionExecution<Void>()
 		{
-			// effacer toutes les chansons du disque puisqu'on efface le disque
-			chansonDAO.deleteByDisqueId( id );
+			@Override
+			public Void execute( Connection connection ) throws Exception
+			{
+				// effacer toutes les chansons du disque puisqu'on efface le disque
+				chansonDAO.deleteByDisqueId( id );
 
-			String sqlQuery = "DELETE FROM disques WHERE id = ?";
+				String sqlQuery = "DELETE FROM disques WHERE id = ?";
 
-			PreparedStatement statement = connection.prepareStatement( sqlQuery );
-			statement.setString( 1, id );
+				PreparedStatement statement = connection.prepareStatement( sqlQuery );
+				statement.setString( 1, id );
 
-			statement.executeUpdate();
-		}
-		catch( SQLException e )
-		{
-			throw new RuntimeException( "Impossible de retirer le disque", e );
-		}
+				statement.executeUpdate();
+
+				return null;
+			}
+		} );
 	}
 
 	private Disque createDisqueFromResultSet( ResultSet resultSet ) throws SQLException
@@ -218,5 +209,16 @@ public class DisqueDAO
 			disque.addChanson( chanson );
 
 		return disque;
+	}
+
+	private boolean doesDisqueHasChanson( Disque disque, int chansonId )
+	{
+		for( Chanson chanson : disque.getChansons() )
+		{
+			if( chanson.getId() == chansonId )
+				return true;
+		}
+
+		return false;
 	}
 }
