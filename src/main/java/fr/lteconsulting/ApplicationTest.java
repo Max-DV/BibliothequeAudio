@@ -1,32 +1,40 @@
 package fr.lteconsulting;
 
-import java.util.UUID;
-
+import fr.lteconsulting.dao.ChansonDAO;
 import fr.lteconsulting.dao.DisqueDAO;
+import fr.lteconsulting.dao.MySQLDatabaseConnection;
+import fr.lteconsulting.modele.Chanson;
 import fr.lteconsulting.modele.Disque;
 
 public class ApplicationTest
 {
 	public static void main( String[] args )
 	{
-		DisqueDAO dao = new DisqueDAO();
+		MySQLDatabaseConnection databaseConnection = new MySQLDatabaseConnection();
 
-		chercherEtAfficherDisque( dao, "pptt" );
-		chercherEtAfficherDisque( dao, "ppttdddd" );
+		ChansonDAO chansonDao = new ChansonDAO( databaseConnection );
+		DisqueDAO disqueDao = new DisqueDAO( databaseConnection, chansonDao );
+
+		chercherEtAfficherDisque( disqueDao, "pptt" );
+		chercherEtAfficherDisque( disqueDao, "ppttdddd" );
 
 		System.out.println( "AJOUT DE DISQUES" );
 		for( int i = 0; i < 10; i++ )
 		{
-			Disque ajout = dao.add( new Disque( "Toto" ) );
-			ajout.afficher();
+			Disque disque = new Disque( "Toto" );
+			disque.addChanson( new Chanson( "Salut !", 35 ) );
+			disque.addChanson( new Chanson( "Ciao.", 366 ) );
+
+			disqueDao.add( disque );
+			disque.afficher();
 		}
 
-		Disque disque = dao.findById( "pptt" );
-		disque.setNom( "DISQUE " + UUID.randomUUID().toString() );
-		dao.update( disque );
+		Disque disque = disqueDao.findById( "pptt" );
+		disque.setNom( "Far Beyond Driven" );
+		disqueDao.update( disque );
 
 		System.out.println( "BIBLIOTHEQUE COMPLETE" );
-		for( Disque d : dao.findAll() )
+		for( Disque d : disqueDao.findAll() )
 			d.afficher();
 	}
 
@@ -40,7 +48,7 @@ public class ApplicationTest
 		}
 		else
 		{
-			System.out.println( "Le disque " + id + "n'existe pas" );
+			System.out.println( "Le disque " + id + " n'existe pas" );
 		}
 	}
 }

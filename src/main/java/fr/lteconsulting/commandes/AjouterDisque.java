@@ -31,7 +31,9 @@ public class AjouterDisque implements Commande
 		if( codeBarre.isEmpty() )
 			codeBarre = UUID.randomUUID().toString();
 
-		Disque disque = new Disque( codeBarre, nom );
+		Disque disque = new Disque();
+		disque.setCodeBarre( codeBarre );
+		disque.setNom( nom );
 
 		while( true )
 		{

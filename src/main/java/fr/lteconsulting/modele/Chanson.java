@@ -2,6 +2,8 @@ package fr.lteconsulting.modele;
 
 public class Chanson
 {
+	private int id;
+	private String disqueId;
 	private String nom;
 	private int dureeEnSecondes;
 
@@ -13,6 +15,26 @@ public class Chanson
 	{
 		this.nom = nom;
 		this.dureeEnSecondes = dureeEnSecondes;
+	}
+
+	public int getId()
+	{
+		return id;
+	}
+
+	public void setId( int id )
+	{
+		this.id = id;
+	}
+
+	public String getDisqueId()
+	{
+		return disqueId;
+	}
+
+	public void setDisqueId( String disqueId )
+	{
+		this.disqueId = disqueId;
 	}
 
 	public String getNom()
