@@ -1,27 +1,32 @@
 package fr.lteconsulting.modele;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import fr.lteconsulting.dao.DisqueDAO;
 
 public class Bibliotheque
 {
-	private Map<String, Disque> disques = new HashMap<>();
+	private DisqueDAO disqueDao;
+
+	public Bibliotheque( DisqueDAO disqueDao )
+	{
+		this.disqueDao = disqueDao;
+	}
 
 	public void ajouterDisque( Disque disque )
 	{
-		disques.put( disque.getCodeBarre(), disque );
+		disqueDao.add( disque );
 	}
 
 	public List<Disque> getDisques()
 	{
-		return new ArrayList<>( disques.values() );
+		return disqueDao.findAll();
 	}
 
 	public Disque rechercherDisqueParCodeBarre( String codeBarre )
 	{
-		return disques.get( codeBarre );
+		return disqueDao.findById( codeBarre );
 	}
 
 	public List<Disque> rechercherDisqueParNom( String recherche )
@@ -30,7 +35,8 @@ public class Bibliotheque
 
 		List<Disque> resultat = new ArrayList<>();
 
-		for( Disque disque : disques.values() )
+		// TODO pour optimiser la recherche, nous devrions la faire faire à MySQL (ajouter une méthode au DAO)
+		for( Disque disque : disqueDao.findAll() )
 		{
 			if( disque.getNom().toLowerCase().contains( recherche ) )
 				resultat.add( disque );
@@ -43,7 +49,8 @@ public class Bibliotheque
 	{
 		List<Disque> resultat = new ArrayList<>();
 
-		for( Disque disque : disques.values() )
+		// TODO pour optimiser la recherche, nous devrions la faire faire à MySQL (ajouter une méthode au DAO)
+		for( Disque disque : disqueDao.findAll() )
 		{
 			boolean estValide = true;
 			for( String terme : termes )
@@ -64,8 +71,10 @@ public class Bibliotheque
 
 	public void afficher()
 	{
+		List<Disque> disques = disqueDao.findAll();
+
 		System.out.println( "BIBLIOTHEQUE avec " + disques.size() + " disques" );
-		for( Disque disque : disques.values() )
+		for( Disque disque : disques )
 			disque.afficher();
 	}
 }
