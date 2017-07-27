@@ -26,6 +26,16 @@ public class Bibliotheque
 		disqueDao.delete( id );
 	}
 
+	public void modifierDisque( String id, String nouveauNom )
+	{
+		Disque disque = disqueDao.findById( id );
+		if( disque == null )
+			return;
+
+		disque.setNom( nouveauNom );
+		disqueDao.update( disque );
+	}
+
 	public List<Disque> getDisques()
 	{
 		return disqueDao.findAll();

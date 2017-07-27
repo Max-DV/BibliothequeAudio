@@ -4,6 +4,7 @@ import fr.lteconsulting.commandes.AffichageDisquesParCodeBarre;
 import fr.lteconsulting.commandes.AffichageDisquesParNom;
 import fr.lteconsulting.commandes.AjouterDisque;
 import fr.lteconsulting.commandes.GenerationDisques;
+import fr.lteconsulting.commandes.ModifierDisque;
 import fr.lteconsulting.commandes.RechercheParCodeBarre;
 import fr.lteconsulting.commandes.RechercheParNom;
 import fr.lteconsulting.commandes.SupprimerDisque;
@@ -20,6 +21,7 @@ public class InferfaceUtilisateur
 		menu.ajouterCommande( new RechercheParNom( bibliotheque ) );
 		menu.ajouterCommande( new RechercheParCodeBarre( bibliotheque ) );
 		menu.ajouterCommande( new AjouterDisque( bibliotheque ) );
+		menu.ajouterCommande( new ModifierDisque( bibliotheque ) );
 		menu.ajouterCommande( new SupprimerDisque( bibliotheque ) );
 		menu.ajouterCommande( new GenerationDisques( bibliotheque ) );
 	}
