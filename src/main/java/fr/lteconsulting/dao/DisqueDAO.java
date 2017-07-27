@@ -104,6 +104,13 @@ public class DisqueDAO
 
 	public void update( Disque disque )
 	{
+		if( disque.getCodeBarre() == null )
+		{
+			System.out.println( "ATTENTION, CE N'EST PAS UNE MAJ MAIS UN INSERT !" );
+			add( disque );
+			return;
+		}
+
 		try
 		{
 			String sqlQuery = "UPDATE disques SET `nom` = ? WHERE id = ?";
@@ -114,12 +121,41 @@ public class DisqueDAO
 
 			statement.executeUpdate();
 
-			// TODO mettre a jour en base les chansons du disque => supprimées et ajoutées à gérer
+			// Mise à jour des chansons du disque : ceci se passe en deux étapes
+			// c'est une version pas du tout optimisée, mais facile à comprendre !
+
+			// ajouter en base les chansons qui n'ont pas d'id (c'est-à-dire quelles sont nouvelles)
+			// mettre à jour les chansons qui ont un id
+			for( Chanson chanson : disque.getChansons() )
+			{
+				if( chanson.getId() <= 0 )
+					chansonDAO.add( chanson );
+				else
+					chansonDAO.update( chanson );
+			}
+
+			// supprimer les chansons qui sont dans la base pour ce disque mais qui ne sont pas dans l'objet disque
+			for( Chanson chanson : chansonDAO.findByDisqueId( disque.getCodeBarre() ) )
+			{
+				if( !doesDisqueHasChanson( disque, chanson.getId() ) )
+					chansonDAO.delete( chanson.getId() );
+			}
 		}
 		catch( SQLException e )
 		{
 			throw new RuntimeException( "Impossible de mettre à jour le disque", e );
 		}
+	}
+
+	private boolean doesDisqueHasChanson( Disque disque, int chansonId )
+	{
+		for( Chanson chanson : disque.getChansons() )
+		{
+			if( chanson.getId() == chansonId )
+				return true;
+		}
+
+		return false;
 	}
 
 	public void delete( String id )

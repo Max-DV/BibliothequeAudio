@@ -172,12 +172,14 @@ public class ChansonDAO
 
 	private Chanson createChansonFromResultSet( ResultSet resultSet ) throws SQLException
 	{
+		int id = resultSet.getInt( "id" );
 		String disqueId = resultSet.getString( "disque_id" );
 		String nom = resultSet.getString( "nom" );
 		int duree = resultSet.getInt( "duree" );
 
 		Chanson chanson = new Chanson();
 
+		chanson.setId( id );
 		chanson.setNom( nom );
 		chanson.setDureeEnSecondes( duree );
 		chanson.setDisqueId( disqueId );

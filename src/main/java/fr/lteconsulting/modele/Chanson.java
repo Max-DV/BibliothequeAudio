@@ -2,7 +2,7 @@ package fr.lteconsulting.modele;
 
 public class Chanson
 {
-	private int id;
+	private int id = -1;
 	private String disqueId;
 	private String nom;
 	private int dureeEnSecondes;
