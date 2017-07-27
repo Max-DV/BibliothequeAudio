@@ -21,6 +21,11 @@ public class Bibliotheque
 		disqueDao.add( disque );
 	}
 
+	public void supprimerDisque( String id )
+	{
+		disqueDao.delete( id );
+	}
+
 	public List<Disque> getDisques()
 	{
 		return disqueDao.findAll();

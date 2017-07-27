@@ -16,7 +16,7 @@ public class Menu
 
 	public Commande saisirCommmande()
 	{
-		// TODO exercice : afficher num�rotation en lettres puis en chiffre romain
+		// TODO exercice : afficher numérotation en lettres puis en chiffre romain
 		// afficher un menu,
 		System.out.println();
 		System.out.println( "MENU" );
@@ -27,8 +27,8 @@ public class Menu
 			System.out.println( "- " + (i + 1) + ". " + commande.getNom() );
 		}
 
-		// TODO faire un r�capitulatif des choix
-		// TODO g�rer les erreurs de l'utilisateur
+		// TODO faire un récapitulatif des choix
+		// TODO gérer les erreurs de l'utilisateur
 		int choix = Saisie.saisieInt( "Faites votre choix" );
 
 		Commande commandeChoisie = commandes.get( choix - 1 );

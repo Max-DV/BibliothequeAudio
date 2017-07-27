@@ -13,8 +13,7 @@ public class MySQLDatabaseConnection
 		try
 		{
 			Class.forName( "com.mysql.jdbc.Driver" );
-			connection = DriverManager.getConnection(
-					"jdbc:mysql://localhost:3306/bibliotheque_audio", "root", "" );
+			connection = DriverManager.getConnection( "jdbc:mysql://localhost:3306/bibliotheque_audio", "root", "" );
 		}
 		catch( ClassNotFoundException e )
 		{
